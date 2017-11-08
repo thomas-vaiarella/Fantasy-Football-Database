@@ -1,5 +1,19 @@
+# import python as python
 import requests
 import pprint
+import MySQLdb
+
+db = MySQLdb.connect("160.153.61.162","seandatabase", "theseandatabase", "connollynfldata")
+if db is None:
+    db.close()
+    print("We r screwed")
+else:
+    c = db.cursor()
+    c.execute("""SELECT team_name from connollynfldata.team""")
+    print("we did it")
+print(c.fetchone())
+db.close()
+
 
 # URL strings
 api_url = 'http://api.fantasy.nfl.com/'
@@ -51,7 +65,7 @@ points_mapping = {
 pp = pprint.PrettyPrinter(indent=4)
 
 
-def parse_stats(stats: dict):
+def parse_stats(stats):
     mapped_stats = dict()
 
     for key in stats:
@@ -68,7 +82,7 @@ def player_points(player):
     return points(stats)
 
 
-def points(stats: dict):
+def points(stats):
     total_points = 0.0
     for key in stats:
         amount = stats.get(key, 0)
@@ -76,7 +90,7 @@ def points(stats: dict):
     return round(total_points, 2)
 
 
-def player_week(player: dict):
+def player_week(player):
     """
 
     :type player: dict
@@ -125,7 +139,7 @@ def player_tds(player):
     return rectds + rushtds + passtds
 
 
-def all_stats_for_week(week: int):
+def all_stats_for_week(week):
     print("Getting stats for week ", week)
     week_stats = dict()
     for position in positions_array:
@@ -133,7 +147,7 @@ def all_stats_for_week(week: int):
     return week_stats
 
 
-def all_stats_through_week(week: int):
+def all_stats_through_week(week):
     all_stats = dict()
     for wk in range(1, week):
         all_stats[wk] = all_stats_for_week(wk)
@@ -144,6 +158,7 @@ def all_stats_through_week(week: int):
 #pp.pprint(defenses)
 
 
-r = requests.post("https://api.nfl.com/v1/oauth/token?grant_type=client_credentials&client_id=nfl&client_secret=15232")
+# Commented this out because it was causing an error. Tried with original api link to test.
+# r = requests.post("https://api.nfl.com/v1/oauth/token?grant_type=client_credentials&client_id=nfl&client_secret=15232")
+r = requests.post("http://api.fantasy.nfl.com/v1/players/stats?statType=seasonStats&season=2017&week=9&format=json")
 pp.pprint(r.json())
-
