@@ -11,7 +11,6 @@ else:
     c.execute("""SELECT team_name from connollynfldata.team""")
     print("we did it")
 print(c.fetchone())
-db.close()
 
 
 # URL strings
@@ -62,6 +61,7 @@ points_mapping = {
     'SF': 2.0
 }
 
+pp = pprint.PrettyPrinter()
 
 def parse_stats(stats):
     mapped_stats = dict()
@@ -144,3 +144,38 @@ def all_stats_through_week(week):
     for wk in range(1, week):
         all_stats[wk] = all_stats_for_week(wk)
     return all_stats
+
+
+# This query will give back the id of the given player in the database,
+# inserting a new record if one does not exist.
+get_player_id_query = "SELECT get_player_id(%s, %s, %s, %s);"
+
+# This query will give back the id of the record for a given player's
+# stats for a given week, creating a new record if necessary.
+get_week_stats_for_player_week = "SELECT get_player_week_stats(%s, %s);"
+
+# This statement will call a procedure to insert a stat value for
+# a given stat for a given week's stats.
+set_stats_produced = "call set_stats_produced(%s, %s, %s);"
+
+def insert_stats_for_week(week):
+    cursor = db.cursor()
+    player_stats = all_stats_for_week(week)
+    for position in player_stats:
+        players = player_stats[position]
+        for player in players:
+            cursor.execute(get_player_id_query, (player['id'], player['name'], player['teamAbbr'], player['position']))
+            player_id = cursor.fetchone()[0]
+            cursor.execute(get_week_stats_for_player_week, (player_id, week))
+            weekstats_id = cursor.fetchone()[0]
+            stats = player['stats']
+            for stat_name in stats:
+                cursor.execute(set_stats_produced, (weekstats_id, stat_name, stats[stat_name]))
+
+
+insert_stats_for_week(1)
+
+
+
+
+db.close()
