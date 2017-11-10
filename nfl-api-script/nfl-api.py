@@ -1,9 +1,8 @@
-# import python as python
 import requests
 import pprint
-import MySQLdb
+import mysql.connector
 
-db = MySQLdb.connect("160.153.61.162","seandatabase", "theseandatabase", "connollynfldata")
+db = mysql.connector.connect(host="160.153.61.162", user="seandatabase", password="theseandatabase", database="connollynfldata")
 if db is None:
     db.close()
     print("We r screwed")
@@ -62,7 +61,6 @@ points_mapping = {
     'PRTD': 6.0, #punt return td
     'SF': 2.0
 }
-pp = pprint.PrettyPrinter(indent=4)
 
 
 def parse_stats(stats):
@@ -103,8 +101,6 @@ def player_week(player):
     player.pop('weekProjectedPts')
 
     stats = player.pop('stats')
-    if (stats.get('30', None) is 0) or (stats.get('31', None) is 0):
-        print(player)
 
     player['stats'] = parse_stats(stats)
 
@@ -115,11 +111,8 @@ def player_stats_for_week(position, week):
     assert position in positions_array
     assert type(week) == int
     assert week >= 1, week <= 17
-    print("Getting stats for position ", position, " during week ", week)
     payload = {'format': 'json', 'statType': 'weekStats', 'position': position, 'week': week}
     data = nfl_request(endpoint=stats_endpoint, payload=payload)
-    print("Received")
-    pp.pprint(data['players'])
     players = list(map(player_week, list(data['players'])))
     return players
 
@@ -140,7 +133,6 @@ def player_tds(player):
 
 
 def all_stats_for_week(week):
-    print("Getting stats for week ", week)
     week_stats = dict()
     for position in positions_array:
         week_stats[position] = player_stats_for_week(position, week)
@@ -152,13 +144,3 @@ def all_stats_through_week(week):
     for wk in range(1, week):
         all_stats[wk] = all_stats_for_week(wk)
     return all_stats
-
-
-#defenses = player_stats_for_week("DEF", 5)
-#pp.pprint(defenses)
-
-
-# Commented this out because it was causing an error. Tried with original api link to test.
-# r = requests.post("https://api.nfl.com/v1/oauth/token?grant_type=client_credentials&client_id=nfl&client_secret=15232")
-r = requests.post("http://api.fantasy.nfl.com/v1/players/stats?statType=seasonStats&season=2017&week=9&format=json")
-pp.pprint(r.json())
