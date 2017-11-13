@@ -2,6 +2,11 @@ DROP schema if exists fantasyfootball;
 create schema fantasyfootball;
 USE fantasyfootball;
 
+create table users (
+	username varchar(30) primary key,
+    password varchar(30)
+);
+
 create table scoring (
 	scoring_id int primary key,
     scoring_name enum('standard', 'ppr')
@@ -28,6 +33,7 @@ create table team (
     team_name varchar(45),
 	username varchar(45),
     constraint league_id_fk foreign key (league_id) references league (league_id),
+    constraint username_fk foreign key (username) references users (username),
     constraint one_team_per_league unique (league_id, username),
     constraint unique_team_name unique (league_id, team_name)
 );
@@ -55,7 +61,6 @@ create table weekstats (
     constraint player_id_fk foreign key (player_id) references player (player_id),
     constraint one_week_stats unique (player_id, week_num)
 );
-
 
 create table statsproduced (
 	weekstats_id int,
