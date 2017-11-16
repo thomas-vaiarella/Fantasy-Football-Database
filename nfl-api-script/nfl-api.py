@@ -173,7 +173,16 @@ def insert_stats_for_week(week):
                 cursor.execute(set_stats_produced, (weekstats_id, stat_name, stats[stat_name]))
 
 
-insert_stats_for_week(1)
+# insert_stats_for_week(1)
+# insert_stats_for_week(2)
+# insert_stats_for_week(3)
+# insert_stats_for_week(4)
+# insert_stats_for_week(5)
+# insert_stats_for_week(6)
+# insert_stats_for_week(7)
+# insert_stats_for_week(8)
+# insert_stats_for_week(9)
+# insert_stats_for_week(10)
 
 
 

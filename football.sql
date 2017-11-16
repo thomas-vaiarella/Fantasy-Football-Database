@@ -4,13 +4,12 @@ USE fantasyfootball;
 
 create table users (
 	username varchar(30) primary key,
-    password varchar(30)
+    psswrd varchar(30)
 );
 
 create table scoring (
 	scoring_id int primary key,
     scoring_name enum('standard', 'ppr')
-
 );
 
 create table statvalue (
