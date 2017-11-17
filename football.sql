@@ -1,6 +1,6 @@
-DROP schema if exists fantasyfootball;
-create schema fantasyfootball;
-USE fantasyfootball;
+DROP schema if exists connollynfldata;
+create schema connollynfldata;
+USE connollynfldata;
 
 create table users (
 	username varchar(30) primary key,
@@ -36,6 +36,37 @@ create table team (
     constraint one_team_per_league unique (league_id, username),
     constraint unique_team_name unique (league_id, team_name)
 );
+
+drop trigger if exists max_teams_per_league;
+delimiter //
+create trigger max_teams_per_league before insert on team
+for each row
+begin
+	declare league int;
+    declare current_num_teams int;
+    set league = new.league_id;
+    select teams_in_league(league) into current_num_teams;
+    
+    if current_num_teams >= 10
+    then signal sqlstate '45000' set message_text = "This league is full.";
+    end if;
+    
+end //
+delimiter ;
+
+drop function if exists teams_in_league;
+delimiter //
+create function teams_in_league(league_id int)
+returns int
+begin 
+	declare num_teams int;
+    select count(distinct(team_id))
+	into num_teams
+	from team t
+    where t.league_id = league_id;
+    return num_teams;
+end //
+delimiter ;
 
 create table matchup (
 	week_num int,
