@@ -26,6 +26,19 @@ create table league (
     constraint scoring_id_fk_league foreign key (scoring_id) references scoring (scoring_id)
 );
 
+drop procedure if exists create_league;
+delimiter //
+create procedure create_league(s_id int)
+begin
+	if s_id not in (select s_id from scoring)
+    then signal sqlstate '45000' set message_text = 'That scoring type does not exist.';
+    end if;
+    
+    insert into league values (league_id, s_id);
+    select last_insert_id();
+end //
+delimiter ;
+
 create table team (
 	team_id int auto_increment primary key,
 	league_id int,
@@ -65,6 +78,144 @@ begin
 	from team t
     where t.league_id = league_id;
     return num_teams;
+end //
+delimiter ;
+
+drop trigger if exists create_matchups;
+delimiter //
+create trigger create_matchups after insert on team
+for each row
+begin 
+    declare team0 int;
+	declare team1 int;
+	declare team2 int;
+    declare team3 int;
+	declare team4 int;
+	declare team5 int;
+    declare team6 int;
+	declare team7 int;
+	declare team8 int;
+    declare team9 int;
+    
+	declare team_ids cursor for 
+    select team_id
+    from team
+    where league_id = NEW.league_id;
+    
+    open team_ids;
+    
+    fetch team_ids into team0;
+    fetch team_ids into team1;
+    fetch team_ids into team2;
+    fetch team_ids into team3;
+    fetch team_ids into team4;
+    fetch team_ids into team5;
+    fetch team_ids into team6;
+    fetch team_ids into team7;
+    fetch team_ids into team8;
+    fetch team_ids into team9;
+    
+    insert into matchup values (1, team0, team2);
+    insert into matchup values (1, team1, team4);
+    insert into matchup values (1, team3, team5);
+    insert into matchup values (1, team6, team9);
+    insert into matchup values (1, team7, team8);
+    
+    insert into matchup values (2, team0, team5);
+    insert into matchup values (2, team1, team3);
+    insert into matchup values (2, team2, team6);
+    insert into matchup values (2, team4, team8);
+    insert into matchup values (2, team7, team9);
+    
+    insert into matchup values (3, team0, team1);
+    insert into matchup values (3, team2, team9);
+    insert into matchup values (3, team3, team8);
+    insert into matchup values (3, team4, team7);
+    insert into matchup values (3, team5, team6);
+    
+    insert into matchup values (4, team0, team8);
+    insert into matchup values (4, team1, team6);
+    insert into matchup values (4, team2, team5);
+    insert into matchup values (4, team3, team7);
+    insert into matchup values (4, team4, team9);
+    
+    insert into matchup values (5, team0, team7);
+    insert into matchup values (5, team1, team2);
+    insert into matchup values (5, team3, team4);
+    insert into matchup values (5, team5, team9);
+    insert into matchup values (5, team6, team8);
+    
+    insert into matchup values (6, team0, team4);
+    insert into matchup values (6, team1, team5);
+    insert into matchup values (6, team2, team8);
+    insert into matchup values (6, team3, team9);
+    insert into matchup values (6, team6, team7);
+    
+    insert into matchup values (7, team0, team3);
+    insert into matchup values (7, team1, team9);
+    insert into matchup values (7, team2, team7);
+    insert into matchup values (7, team4, team6);
+    insert into matchup values (7, team5, team8);
+    
+    insert into matchup values (8, team0, team9);
+    insert into matchup values (8, team1, team8);
+    insert into matchup values (8, team2, team4);
+    insert into matchup values (8, team3, team6);
+    insert into matchup values (8, team5, team7);
+    
+    insert into matchup values (9, team0, team6);
+    insert into matchup values (9, team1, team7);
+    insert into matchup values (9, team2, team3);
+    insert into matchup values (9, team4, team5);
+    insert into matchup values (9, team8, team9);
+    
+    insert into matchup values (10, team0, team2);
+    insert into matchup values (10, team1, team4);
+    insert into matchup values (10, team3, team5);
+    insert into matchup values (10, team6, team9);
+    insert into matchup values (10, team7, team8);
+    
+    insert into matchup values (11, team0, team5);
+    insert into matchup values (11, team1, team3);
+    insert into matchup values (11, team2, team6);
+    insert into matchup values (11, team4, team8);
+    insert into matchup values (11, team7, team9);
+    
+    insert into matchup values (12, team0, team5);
+    insert into matchup values (12, team1, team3);
+    insert into matchup values (12, team2, team6);
+    insert into matchup values (12, team4, team8);
+    insert into matchup values (12, team7, team9);
+    
+    insert into matchup values (13, team0, team1);
+    insert into matchup values (13, team2, team9);
+    insert into matchup values (13, team3, team8);
+    insert into matchup values (13, team4, team7);
+    insert into matchup values (13, team5, team6);
+    
+    insert into matchup values (14, team0, team8);
+    insert into matchup values (14, team1, team6);
+    insert into matchup values (14, team2, team5);
+    insert into matchup values (14, team3, team7);
+    insert into matchup values (14, team4, team9);
+    
+    insert into matchup values (15, team0, team7);
+    insert into matchup values (15, team1, team2);
+    insert into matchup values (15, team3, team4);
+    insert into matchup values (15, team5, team9);
+    insert into matchup values (15, team6, team8);
+    
+    insert into matchup values (16, team0, team4);
+    insert into matchup values (16, team1, team5);
+    insert into matchup values (16, team2, team8);
+    insert into matchup values (16, team3, team9);
+    insert into matchup values (16, team6, team7);
+    
+    insert into matchup values (17, team0, team3);
+    insert into matchup values (17, team1, team9);
+    insert into matchup values (17, team2, team7);
+    insert into matchup values (17, team4, team6);
+    insert into matchup values (17, team5, team8);
 end //
 delimiter ;
 
