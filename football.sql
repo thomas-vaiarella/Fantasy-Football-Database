@@ -150,7 +150,7 @@ drop procedure if exists set_stats_produced;
 DELIMITER //
 create procedure set_stats_produced(given_week_stats_id int, given_stat_name varchar(5), given_stat_value int)
 begin
-INSERT INTO stats_produced
+INSERT INTO statsproduced
 VALUES (given_week_stats_id, given_stat_name, given_stat_value);
 end //
 
