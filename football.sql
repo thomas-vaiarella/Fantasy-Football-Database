@@ -336,6 +336,125 @@ INSERT INTO statsproduced
 VALUES (given_week_stats_id, given_stat_name, given_stat_value);
 end //
 
+DELIMITER ;
+drop function if exists get_defensive_ya_pts;
+DELIMITER //
+create function get_defensive_ya_pts(stat_value INT)
+RETURNS INT
+BEGIN
+DECLARE yds_allowed INT;
+
+SELECT stat_total
+FROM statsproduced 
+WHERE statsproduced.weekstats_id = weekstats_id 
+AND statsproduced.stat_name = 'DYD' INTO yds_allowed;
+
+CASE
+    WHEN yds_allowed = NULL THEN RETURN 0;
+	WHEN yds_allowed < 100 THEN RETURN 5;
+    WHEN yds_allowed >= 100 AND yds_allowed <= 199 THEN RETURN 3;
+	WHEN yds_allowed >= 200 AND yds_allowed <= 299 THEN RETURN 2;
+    WHEN yds_allowed >= 300 AND yds_allowed <= 349 THEN RETURN 0;
+	WHEN yds_allowed >= 350 AND yds_allowed <= 399 THEN RETURN -1;
+	WHEN yds_allowed >= 400 AND yds_allowed <= 449 THEN RETURN -3;
+	WHEN yds_allowed >= 450 AND yds_allowed <= 499 THEN RETURN -5;
+	WHEN yds_allowed >= 500 AND yds_allowed <= 549 THEN RETURN -6;
+	WHEN yds_allowed > 550 THEN RETURN -7;
+    ELSE RETURN 0;
+    END CASE;
+END //
+
+DELIMITER ;
+drop function if exists get_defensive_pa_pts;
+DELIMITER //
+create function get_defensive_pa_pts(stat_value INT)
+RETURNS INT
+BEGIN
+DECLARE pts_allowed INT;
+
+SELECT stat_total
+FROM statsproduced 
+WHERE statsproduced.weekstats_id = weekstats_id 
+AND statsproduced.stat_name = 'PA' INTO pts_allowed;
+
+CASE
+    WHEN pts_allowed = NULL THEN RETURN 0;
+	WHEN pts_allowed = 0 THEN RETURN 5;
+    WHEN pts_allowed >= 1 AND pts_allowed <= 6 THEN RETURN 4;
+    WHEN pts_allowed >= 7 AND pts_allowed <= 13 THEN RETURN 3;
+    WHEN pts_allowed >= 14 AND pts_allowed <= 17 THEN RETURN 1;
+    WHEN pts_allowed >= 28 AND pts_allowed <= 34 THEN RETURN -1;
+    WHEN pts_allowed >= 35 AND pts_allowed <= 45 THEN RETURN -3;
+    WHEN pts_allowed >= 46 THEN RETURN -5;
+    ELSE RETURN 0;
+    END CASE;
+
+END //
 
 
+DELIMITER ;
+drop function if exists get_pts_for_stat;
+DELIMITER //
+create function get_pts_for_stat(stat_name VARCHAR(5), stat_value INT, rec_value INT)
+RETURNS DECIMAL(5, 2)
+BEGIN
 
+CASE stat_name
+	WHEN 'RY' THEN RETURN stat_value * 0.1;
+    WHEN 'RTD' THEN RETURN stat_value * 6;
+    WHEN 'REC' THEN RETURN stat_value * rec_value;
+    WHEN 'REY' THEN RETURN stat_value * 0.1;
+    WHEN 'RETD' THEN RETURN stat_value * 6;
+    WHEN 'FUML' THEN RETURN stat_value * -2;
+    WHEN 'PY' THEN RETURN stat_value * 0.04;
+    WHEN 'PTD' THEN RETURN stat_value * 4;
+    WHEN 'INT' THEN RETURN stat_value * -2;
+    WHEN 'SK' THEN RETURN stat_value * 1;
+    WHEN 'DINT' THEN RETURN stat_value * 2;
+    WHEN 'FR' THEN RETURN stat_value * 2;
+    WHEN 'DTD' THEN RETURN stat_value *4;
+    WHEN 'KRTD' THEN RETURN stat_value * 6;
+    WHEN 'PRTD' THEN RETURN stat_value * 6;
+	WHEN 'SF' THEN RETURN stat_value * 2;
+    
+    WHEN 'DYA' THEN RETURN (SELECT get_defensive_ya_points(stat_value));
+    WHEN 'PA' THEN RETURN (SELECT get_defensive_pa_points(stat_value));
+    
+    ELSE RETURN 0;
+	END CASE;
+END//
+
+DELIMITER ;
+drop function if exists get_fantasy_points;
+DELIMITER //
+create function get_fantasy_points(scoring_id INT, weekstats_id INT)
+RETURNS DECIMAL(5, 2)
+BEGIN
+declare reception_pts INT DEFAULT 0;
+declare total_pts DECIMAL(5, 2) DEFAULT 0;
+declare yds_allowed INT;
+declare pts_allowed INT;
+DECLARE week_id INT;
+DECLARE stat_name VARCHAR(5);
+DECLARE stat_total INT;
+DECLARE done INT DEFAULT FALSE;
+DECLARE cur1 CURSOR FOR SELECT * FROM statsproduced WHERE statsproduced.weekstats_id = weekstats_id;
+DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+
+
+CASE
+	WHEN (SELECT scoring_name FROM scoring WHERE scoring.scoring_id = scoring_id) = 'standard' THEN set reception_pts = 0;
+    ELSE set reception_pts = 1;
+    END CASE;
+
+OPEN cur1;
+read_loop: LOOP
+    FETCH cur1 INTO week_id, stat_name, stat_total;
+    IF done THEN
+		LEAVE read_loop;
+	END IF;
+    SET total_pts = total_pts + (SELECT get_pts_for_stat(stat_name, stat_total, reception_pts));
+END loop;
+CLOSE cur1;
+RETURN total_pts;
+END//
