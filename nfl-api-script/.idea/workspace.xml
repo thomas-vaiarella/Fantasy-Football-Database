@@ -15,8 +15,8 @@
       <file leaf-file-name="nfl-api.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/nfl-api.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2339">
-              <caret line="175" column="2" lean-forward="false" selection-start-line="175" selection-start-column="2" selection-end-line="175" selection-end-column="2" />
+            <state relative-caret-position="254">
+              <caret line="36" column="36" lean-forward="true" selection-start-line="36" selection-start-column="36" selection-end-line="36" selection-end-column="36" />
               <folding>
                 <element signature="e#0#15#0" expanded="true" />
               </folding>
@@ -403,8 +403,8 @@
     <entry file="file://$USER_HOME$/AppData/Local/Programs/Python/Python36-32/Lib/json/__init__.py" />
     <entry file="file://$PROJECT_DIR$/nfl-api.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2339">
-          <caret line="175" column="2" lean-forward="false" selection-start-line="175" selection-start-column="2" selection-end-line="175" selection-end-column="2" />
+        <state relative-caret-position="254">
+          <caret line="36" column="36" lean-forward="true" selection-start-line="36" selection-start-column="36" selection-end-line="36" selection-end-column="36" />
           <folding>
             <element signature="e#0#15#0" expanded="true" />
           </folding>
