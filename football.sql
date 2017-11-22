@@ -405,8 +405,8 @@ CASE stat_name
     WHEN 'PRTD' THEN RETURN stat_value * 6;
 	WHEN 'SF' THEN RETURN stat_value * 2;
     
-    # WHEN 'DYA' THEN SELECT get_defensive_ya_points(stat_value);
-    # WHEN 'PA' THEN SELECT get_defensive_pa_points(stat_value);
+	WHEN 'DYA' THEN RETURN get_defensive_ya_pts(stat_value);
+    WHEN 'PA' THEN RETURN get_defensive_pa_pts(stat_value);
     
     ELSE RETURN 0;
 	END CASE;
