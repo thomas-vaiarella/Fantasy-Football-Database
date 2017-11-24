@@ -268,6 +268,89 @@ create table slot (
     constraint slot_pk primary key (lineup_id, player_id)
 );
 
+drop trigger if exists before_insert_slot;
+delimiter //
+create trigger before_insert_slot before insert on slot
+for each row
+begin
+	declare league_id int;
+    declare week int;
+    declare slots_filled_of_type int;
+    declare position varchar(3);
+    declare error_message varchar(100) default "No error.";
+    
+    select le.league_id into league_id
+    from league le join team t using(league_id)
+					join lineup li using(team_id)
+	where li.lineup_id = NEW.lineup_id;
+    
+    select p.player_position into position
+    from player p
+    where p.player_id = NEW.player_id;
+
+	# check that the player is available
+	if not player_is_available(NEW.player_id, league_id, week)
+    then
+    signal sqlstate '45000' set message_text = 'That player is not available.';
+    end if;
+    
+    # find the number of slots filled of this type for this lineup
+    select count(*) into slots_filled_of_type
+    from slot s join lineup using(lineup_id)
+			join player p using(player_id)
+	where NEW.starting_or_not = s.starting_or_not AND 
+    (NEW.starting_or_not = 0 OR p.player_position = position); # bench players can have any position
+    
+    if NEW.starting_or_not = 0
+    then # check there are only 6 bench players after this insert.
+		if slots_filled_of_type > 5
+        then
+			signal sqlstate '45000' set message_text = 'The bench is full.';
+        end if;  
+	else # check each position for the proper number of starters.
+		case position
+        when 'QB' then
+			if slots_filled_of_type > 0
+            then 
+				signal sqlstate '45000' set message_text = 'Already have one starting QB.';
+			end if;
+		when 'RB' then
+			if slots_filled_of_type > 1
+            then 
+				signal sqlstate '45000' set message_text = 'Already have two starting RBs.';
+			end if;
+		when 'WR' then
+			if slots_filled_of_type > 2
+            then 
+				signal sqlstate '45000' set message_text = 'Already have three starting WRs.';
+			end if;
+		when 'TE' then
+			if slots_filled_of_type > 0
+            then 
+				signal sqlstate '45000' set message_text = 'Already have one starting TE.';
+			end if;
+		when 'K' then
+			if slots_filled_of_type > 0
+            then 
+				signal sqlstate '45000' set message_text = 'Already have one starting K.';
+			end if;
+		when 'DEF' then
+			if slots_filled_of_type > 0
+            then 
+				signal sqlstate '45000' set message_text = 'Already have one starting DEF.';
+			end if;
+		else
+			set error_message = concat("Player has invalid position: ", position);
+			signal sqlstate '45000' set message_text = error_message;
+		end case;
+    end if;
+    
+end //
+delimiter ;
+
+
+
+
 drop procedure if exists add_player_if_not_exists;
 DELIMITER //
 create procedure add_player_if_not_exists(new_player_id int, new_player_name varchar(50), new_player_team varchar(50), new_player_position varchar(50))
@@ -472,3 +555,63 @@ begin
     return last_insert_id();
 end //
 delimiter ;
+
+drop function if exists player_is_available;
+delimiter //
+create function player_is_available(player_id int, league_id int, week int)
+returns boolean
+begin 
+
+return player_id not in 
+(select p.player_id
+ from league le join team t using(league_id)
+				join lineup li using(team_id)
+				join slot s using(lineup_id)
+				join player p using(player_id)
+ where le.league_id = league_id and
+		week_num = week);
+end //
+
+delimiter ;
+
+drop procedure if exists add_player;
+delimiter //
+create procedure add_player(p_id int, team_id int, week int)
+begin
+	declare league_id int;
+    declare lineup_id int;
+    
+    # add the player as a backup if necessary.
+    declare continue handler for sqlstate '45000'
+		insert into slot values (lineup_id, p_id, 0);
+    
+    # get the league for this team.
+    select l.league_id into league_id
+    from team join league l using(league_id)
+    where team.team_id = team_id
+    limit 1;
+    
+    # find the lineup to insert the player into.
+    select get_lineup_id(team_id, week) into lineup_id;
+    
+    
+    # add the player as a starter if possible, using the continue
+    # handler when this fails.
+    insert into slot values (lineup_id, p_id, 1);
+    
+end //
+delimiter ;
+
+select * from lineup;
+select * from team;
+select * from slot;
+select * from player;
+call add_player(2504797, 1, 1);
+select player_is_available(2504797, 1, 1);
+
+insert into slot values(1, 2550325, 1);
+
+(select player_id from league le join team t using(league_id)
+				join lineup li using(team_id)
+				join slot s using(lineup_id)
+				join player p using(player_id));
