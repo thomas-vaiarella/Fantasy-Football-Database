@@ -446,3 +446,29 @@ END loop;
 CLOSE cur1;
 RETURN total_pts;
 END//
+delimiter ;
+
+drop function if exists get_lineup_id;
+delimiter //
+create function get_lineup_id(team_id int, week int)
+returns int
+begin 
+	declare l_id int default -1;
+    
+    if week < 1 OR week > 17
+    then
+	signal sqlstate '45000' set message_text = 'Week must be between 1 and 17.';
+    end if;
+    
+	select lineup_id into l_id
+    from lineup
+    where week_num = week and lineup.team_id = team_id;
+    
+    if l_id <> -1
+    then return l_id;
+    end if;
+    
+    insert into lineup values (lineup_id, week, team_id);
+    return last_insert_id();
+end //
+delimiter ;
