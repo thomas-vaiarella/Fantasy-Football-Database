@@ -274,19 +274,37 @@ create trigger before_insert_slot before insert on slot
 for each row
 begin
 	declare league_id int;
+    declare team_id int;
     declare week int;
     declare slots_filled_of_type int;
     declare position varchar(3);
     declare error_message varchar(100) default "No error.";
     
-    select le.league_id into league_id
-    from league le join team t using(league_id)
-					join lineup li using(team_id)
+    # find out what league we're in
+    select t.league_id into league_id
+    from team t join lineup li using(team_id)
 	where li.lineup_id = NEW.lineup_id;
     
+    # find out what team we're in
+    select l.team_id into team_id
+	from lineup l
+	where l.lineup_id = NEW.lineup_id;
+    
+    # find out what week this is
+    select l.week_num into week
+    from lineup l
+    where l.lineup_id = NEW.lineup_id;
+    
+    # find out this player's position
     select p.player_position into position
     from player p
     where p.player_id = NEW.player_id;
+    
+    # don't allow an insert into a locked (old) lineup.
+    if NEW.lineup_id <> current_lineup(team_id)
+    then
+		signal sqlstate '45000' set message_text = 'Cannot edit a lineup other than the current one.';
+    end if;
 
 	# check that the player is available
 	if not player_is_available(NEW.player_id, league_id, week)
@@ -296,9 +314,9 @@ begin
     
     # find the number of slots filled of this type for this lineup
     select count(*) into slots_filled_of_type
-    from slot s join lineup using(lineup_id)
+    from slot s join lineup li using(lineup_id)
 			join player p using(player_id)
-	where NEW.starting_or_not = s.starting_or_not AND 
+	where li.lineup_id = NEW.lineup_id AND NEW.starting_or_not = s.starting_or_not AND 
     (NEW.starting_or_not = 0 OR p.player_position = position); # bench players can have any position
     
     if NEW.starting_or_not = 0
@@ -340,7 +358,7 @@ begin
 				signal sqlstate '45000' set message_text = 'Already have one starting DEF.';
 			end if;
 		else
-			set error_message = concat("Player has invalid position: ", position);
+			set error_message = concat("Player has invalid position: ", ifnull(position, 'NULL'));
 			signal sqlstate '45000' set message_text = error_message;
 		end case;
     end if;
@@ -561,22 +579,20 @@ delimiter //
 create function player_is_available(player_id int, league_id int, week int)
 returns boolean
 begin 
-
 return player_id not in 
-(select p.player_id
+(select s.player_id
  from league le join team t using(league_id)
 				join lineup li using(team_id)
 				join slot s using(lineup_id)
-				join player p using(player_id)
  where le.league_id = league_id and
 		week_num = week);
 end //
 
 delimiter ;
 
-drop procedure if exists add_player;
+drop procedure if exists add_player_to_lineup;
 delimiter //
-create procedure add_player(p_id int, team_id int, week int)
+create procedure add_player_to_lineup(p_id int, team_id int)
 begin
 	declare league_id int;
     declare lineup_id int;
@@ -592,8 +608,7 @@ begin
     limit 1;
     
     # find the lineup to insert the player into.
-    select get_lineup_id(team_id, week) into lineup_id;
-    
+    select current_lineup(team_id) into lineup_id;
     
     # add the player as a starter if possible, using the continue
     # handler when this fails.
@@ -602,16 +617,20 @@ begin
 end //
 delimiter ;
 
-select * from lineup;
-select * from team;
-select * from slot;
-select * from player;
-call add_player(2504797, 1, 1);
-select player_is_available(2504797, 1, 1);
+drop function if exists current_lineup;
+delimiter //
+create function current_lineup(team_id int)
+returns int
+begin
+	declare latest_lineup int;
+    
+    select lineup_id into latest_lineup
+    from lineup join team using(team_id)
+    where team.team_id = team_id
+    order by week_num desc
+    limit 1;
 
-insert into slot values(1, 2550325, 1);
+	return latest_lineup;
+end //
 
-(select player_id from league le join team t using(league_id)
-				join lineup li using(team_id)
-				join slot s using(lineup_id)
-				join player p using(player_id));
+delimiter ;
