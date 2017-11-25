@@ -6,11 +6,7 @@ db = mysql.connector.connect(host="160.153.61.162", user="seandatabase", passwor
 if db is None:
     db.close()
     print("We r screwed")
-else:
-    c = db.cursor()
-    c.execute("""SELECT team_name from connollynfldata.team""")
-    print("we did it")
-print(c.fetchone())
+    exit(1)
 
 
 # URL strings
@@ -122,28 +118,11 @@ def nfl_request(endpoint, payload):
     return r.json()
 
 
-def player_tds(player):
-    stats = player.get('stats', None)
-    if stats is None:
-        return 0
-    rectds = int(stats.get('rectd', 0))
-    rushtds = int(stats.get('rushtd', 0))
-    passtds = int(stats.get('passtd', 0))
-    return rectds + rushtds + passtds
-
-
 def all_stats_for_week(week):
     week_stats = dict()
     for position in positions_array:
         week_stats[position] = player_stats_for_week(position, week)
     return week_stats
-
-
-def all_stats_through_week(week):
-    all_stats = dict()
-    for wk in range(1, week):
-        all_stats[wk] = all_stats_for_week(wk)
-    return all_stats
 
 
 # This query will give back the id of the given player in the database,
@@ -164,6 +143,7 @@ def insert_stats_for_week(week):
     for position in player_stats:
         players = player_stats[position]
         for player in players:
+            print("Adding stats for: ", player['name'])
             cursor.execute(get_player_id_query, (player['id'], player['name'], player['teamAbbr'], player['position']))
             player_id = cursor.fetchone()[0]
             cursor.execute(get_week_stats_for_player_week, (player_id, week))
@@ -171,6 +151,7 @@ def insert_stats_for_week(week):
             stats = player['stats']
             for stat_name in stats:
                 cursor.execute(set_stats_produced, (weekstats_id, stat_name, stats[stat_name]))
+    cursor.close()
 
 
 # insert_stats_for_week(1)
@@ -183,8 +164,4 @@ def insert_stats_for_week(week):
 # insert_stats_for_week(8)
 # insert_stats_for_week(9)
 # insert_stats_for_week(10)
-
-
-
-
-db.close()
+# insert_stats_for_week(11)
