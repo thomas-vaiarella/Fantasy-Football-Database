@@ -115,6 +115,15 @@ begin
     fetch team_ids into team8;
     fetch team_ids into team9;
     
+    IF (team1 IS NOT NULL) AND
+    (team2 IS NOT NULL) AND
+    (team3 IS NOT NULL) AND
+    (team4 IS NOT NULL) AND
+    (team5 IS NOT NULL) AND
+    (team6 IS NOT NULL) AND
+    (team7 IS NOT NULL) AND
+    (team8 IS NOT NULL) AND
+    (team9 IS NOT NULL) THEN
     insert into matchup values (1, team0, team2);
     insert into matchup values (1, team1, team4);
     insert into matchup values (1, team3, team5);
@@ -216,6 +225,7 @@ begin
     insert into matchup values (17, team2, team7);
     insert into matchup values (17, team4, team6);
     insert into matchup values (17, team5, team8);
+    end if;
 end //
 delimiter ;
 
