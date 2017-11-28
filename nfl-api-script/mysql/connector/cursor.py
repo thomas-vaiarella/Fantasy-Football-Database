@@ -129,7 +129,7 @@ class CursorBase(MySQLCursorAbstract):
         self.arraysize = 1
         super(CursorBase, self).__init__()
 
-    def callproc(self, procname, args=()):
+    def callproc(self, procname: object, args: object = ()) -> object:
         """Calls a stored procedue with the given arguments
 
         The arguments will be set during this session, meaning
@@ -679,7 +679,7 @@ class MySQLCursor(CursorBase):
         """
         return iter(self._stored_results)
 
-    def callproc(self, procname, args=()):
+    def callproc(self, procname: object, args: object = ()) -> object:
         """Calls a stored procedure with the given arguments
 
         The arguments will be set during this session, meaning
@@ -1071,7 +1071,7 @@ class MySQLCursorPrepared(MySQLCursor):
         self._binary = True
         self._have_result = None
 
-    def callproc(self, *args, **kwargs):
+    def callproc(self, args: object, kwargs: object) -> object:
         """Calls a stored procedue
 
         Not supported with MySQLCursorPrepared.

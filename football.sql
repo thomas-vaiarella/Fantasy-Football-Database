@@ -102,6 +102,8 @@ begin
     from team
     where league_id = NEW.league_id;
     
+    declare exit handler for not found begin end;
+    
     open team_ids;
     
     fetch team_ids into team0;
@@ -241,9 +243,12 @@ create table player (
 	player_id int primary key,
     player_name varchar(60),
     player_team enum('TB', 'MIA', 'SF', 'CHI', 'CIN', 'BUF', 'DEN', 'CLE', 'ARI', 'LAC', 'KC', 'IND', 'DAL', 'PHI', 'ATL', 
-    'NYG', 'JAX', 'NYJ', 'DET', 'GB', 'CAR', 'NE', 'OAK', 'LA', 'BAL', 'WAS', 'NO', 'SEA', 'PIT', 'HOU', 'TEN', 'MIN'),
+    'NYG', 'JAX', 'NYJ', 'DET', 'GB', 'CAR', 'NE', 'OAK', 'LA', 'BAL', 'WAS', 'NO', 'SEA', 'PIT', 'HOU', 'TEN', 'MIN', ''),
     player_position enum('QB', 'RB', 'WR', 'TE', 'DEF', 'K')
 );
+
+use connollynfldata;
+describe player;
 
 create table weekstats (
 	weekstats_id int primary key auto_increment,

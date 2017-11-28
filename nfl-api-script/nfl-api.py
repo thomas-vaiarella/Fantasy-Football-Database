@@ -2,7 +2,7 @@ import requests
 import pprint
 import mysql.connector
 
-db = mysql.connector.connect(host="160.153.61.162", user="seandatabase", password="theseandatabase", database="connollynfldata")
+db = mysql.connector.connect(host="localhost", user="root", password="CB.Ch#1root", database="connollynfldata")
 if db is None:
     db.close()
     print("We r screwed")
@@ -143,10 +143,10 @@ def insert_stats_for_week(week):
     for position in player_stats:
         players = player_stats[position]
         for player in players:
-            print("Adding stats for: ", player['name'])
+            print("Adding stats for: ", player['name'], ", week: ", week)
             cursor.execute(get_player_id_query, (player['id'],
                                                  player['name'],
-                                                 player['teamAbbr'] if player['teamAbbr'] is not '' else 'TB',
+                                                 None if player['teamAbbr'] == '' else player['teamAbbr'],
                                                  player['position']))
             player_id = cursor.fetchone()[0]
             cursor.execute(get_week_stats_for_player_week, (player_id, week))
@@ -157,15 +157,16 @@ def insert_stats_for_week(week):
     db.commit()
     cursor.close()
 
-
-# insert_stats_for_week(1)
-# insert_stats_for_week(2)
-# insert_stats_for_week(3)
-# insert_stats_for_week(4)
-# insert_stats_for_week(5)
-# insert_stats_for_week(6)
-# insert_stats_for_week(7)
-# insert_stats_for_week(8)
-# insert_stats_for_week(9)
-# insert_stats_for_week(10)
-# insert_stats_for_week(11)
+"""
+insert_stats_for_week(1)
+insert_stats_for_week(2)
+insert_stats_for_week(3)
+insert_stats_for_week(4)
+insert_stats_for_week(5)
+insert_stats_for_week(6)
+insert_stats_for_week(7)
+insert_stats_for_week(8)
+insert_stats_for_week(9)
+insert_stats_for_week(10)
+insert_stats_for_week(11)
+"""

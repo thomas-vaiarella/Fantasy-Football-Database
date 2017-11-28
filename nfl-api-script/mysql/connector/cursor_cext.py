@@ -394,7 +394,7 @@ class CMySQLCursor(MySQLCursorAbstract):
         self._cnx = None
         return True
 
-    def callproc(self, procname, args=()):
+    def callproc(self, procname: object, args: object = ()) -> object:
         """Calls a stored procedure with the given arguments"""
         if not procname or not isinstance(procname, str):
             raise ValueError("procname must be a string")

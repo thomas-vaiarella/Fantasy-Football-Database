@@ -985,7 +985,7 @@ class MySQLCursorAbstract(object):
         self.arraysize = 1
 
     @abstractmethod
-    def callproc(self, procname, args=()):
+    def callproc(self, procname: object, args: object = ()) -> object:
         """Calls a stored procedure with the given arguments
 
         The arguments will be set during this session, meaning
