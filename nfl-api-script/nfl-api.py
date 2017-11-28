@@ -144,13 +144,17 @@ def insert_stats_for_week(week):
         players = player_stats[position]
         for player in players:
             print("Adding stats for: ", player['name'])
-            cursor.execute(get_player_id_query, (player['id'], player['name'], player['teamAbbr'], player['position']))
+            cursor.execute(get_player_id_query, (player['id'],
+                                                 player['name'],
+                                                 player['teamAbbr'] if player['teamAbbr'] is not '' else 'TB',
+                                                 player['position']))
             player_id = cursor.fetchone()[0]
             cursor.execute(get_week_stats_for_player_week, (player_id, week))
             weekstats_id = cursor.fetchone()[0]
             stats = player['stats']
             for stat_name in stats:
                 cursor.execute(set_stats_produced, (weekstats_id, stat_name, stats[stat_name]))
+    db.commit()
     cursor.close()
 
 
