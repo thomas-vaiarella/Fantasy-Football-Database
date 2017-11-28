@@ -1,6 +1,6 @@
 import mysql.connector
 
-db = mysql.connector.connect(host="localhost", user="root", password="CB.Ch#1root", database="connollynfldata")
+db = mysql.connector.connect(host="160.153.61.162", user="seandatabase", password="theseandatabase", database="connollynfldata")
 if db is None:
     db.close()
     print("We r screwed")
