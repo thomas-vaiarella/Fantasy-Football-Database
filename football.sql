@@ -656,3 +656,30 @@ begin
 end //
 
 delimiter ;
+
+drop function if exists points_for_lineup;
+delimiter //
+create function points_for_lineup(lineup_id int)
+returns decimal(5, 2)
+begin
+    declare scoring int;
+    declare total_points decimal(5, 2);
+    
+    select scoring_id
+    into scoring
+    from lineup join team using(team_id)
+				join league using(league_id)
+	where lineup.lineup_id = lineup_id;
+    
+    select sum(get_fantasy_points(scoring, weekstats_id))
+    into total_points
+    from slot join weekstats using(player_id)
+				join lineup using(lineup_id)
+	where slot.lineup_id = lineup_id and
+			lineup.lineup_id = lineup_id and
+            weekstats.week_num = lineup.week_num and
+            starting_or_not = 1;
+	
+    return total_points;
+end //
+delimiter ;
