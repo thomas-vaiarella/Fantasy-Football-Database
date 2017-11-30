@@ -857,11 +857,20 @@ begin
 end //
 delimiter ;
 
-# we can use this as a basis for weekly scores across a league
-select m.team1_id, points_for_lineup(lt1.lineup_id) as team1_pts, m.team2_id, points_for_lineup(lt2.lineup_id) as team2_points
-from matchup m join lineup lt1 on (lt1.team_id = m.team1_id and lt1.week_num = m.week_num)
-				join lineup lt2 on (lt2.team_id = m.team2_id and lt2.week_num = m.week_num)
-where m.week_num = 1
-order by m.team1_id;
 
+drop procedure if exists weekly_scores;
+delimiter //
+create procedure weekly_scores(league int, week int)
+begin 
+	# we can use this as a basis for weekly scores across a league
+	select m.team1_id, points_for_lineup(lt1.lineup_id) as team1_pts, 
+            m.team2_id, points_for_lineup(lt2.lineup_id) as team2_points
+	from league l join team t using(league_id)
+					join matchup m on (t.team_id = m.team1_id)
+                    join lineup lt1 on (lt1.team_id = m.team1_id and lt1.week_num = m.week_num)
+					join lineup lt2 on (lt2.team_id = m.team2_id and lt2.week_num = m.week_num)
+	where m.week_num = week and l.league_id = league
+	order by m.team1_id;
+end //
+delimiter ;
 
