@@ -759,6 +759,109 @@ read_loop: LOOP
 END loop;
 CLOSE cur2;
 RETURN wins;
-END//
-    
+END//    
 DELIMITER ;
+
+drop procedure if exists advance_lineup;
+delimiter //
+create procedure advance_lineup(lineup_to_advance int)
+begin
+	declare current_week int;
+    declare current_team_id int;
+    declare new_lineup_id int;
+    
+    declare current_slot_player int;
+    declare current_slot_starting tinyint;
+    declare done bool default false;
+    
+    declare all_slots cursor for
+		select player_id, starting_or_not
+        from slot 
+        where lineup_id = lineup_to_advance;
+    
+    declare continue handler for not found
+    begin
+		set done = true;
+    end;
+    
+    # create the new lineup
+    select week_num into current_week
+    from lineup
+    where lineup_id = lineup_to_advance;
+    
+    select team_id into current_team_id
+    from lineup
+    where lineup_id = lineup_to_advance;
+    
+    insert into lineup values(lineup_id, current_week + 1, current_team_id);
+    set new_lineup_id = last_insert_id();
+    
+    open all_slots;
+    # duplicate all of the old slots
+	read_loop: loop
+		fetch all_slots into current_slot_player, current_slot_starting;
+        if done then
+			leave read_loop;
+		end if;
+        
+        insert into slot values (new_lineup_id, current_slot_player, current_slot_starting);    
+    end loop;
+    close all_slots;
+end //
+delimiter ;
+
+drop procedure if exists advance_lineups_in_league;
+delimiter //
+create procedure advance_lineups_in_league(league int, to_week int)
+begin
+	declare current_team_id int;
+    declare current_lineup_id int;
+    declare current_lineup_week int;
+    declare done bool default false;
+    
+	declare all_teams cursor for 
+		select team_id 
+		from team 
+        where league_id = league;
+    
+    declare continue handler for not found
+    begin
+		set done = true;
+	end;
+    
+    open all_teams;
+    # iterate over all teams in the league
+    read_loop: loop
+		fetch all_teams into current_team_id;
+        if done then
+			leave read_loop;
+        end if;
+        
+        # advance the lineup of this team until it's at to_week
+        advance_lineup_loop: loop
+			select current_lineup(current_team_id) into current_lineup_id;
+        
+			select week_num into current_lineup_week
+			from lineup
+			where lineup_id = current_lineup_id;
+        
+			if current_lineup_week >= to_week
+            then
+				leave advance_lineup_loop;
+            end if;
+            
+            call advance_lineup(current_lineup_id);
+        end loop;
+    end loop;
+    close all_teams;    
+end //
+delimiter ;
+
+# we can use this as a basis for weekly scores across a league
+select m.team1_id, points_for_lineup(lt1.lineup_id) as team1_pts, m.team2_id, points_for_lineup(lt2.lineup_id) as team2_points
+from matchup m join lineup lt1 on (lt1.team_id = m.team1_id and lt1.week_num = m.week_num)
+				join lineup lt2 on (lt2.team_id = m.team2_id and lt2.week_num = m.week_num)
+where m.week_num = 1
+order by m.team1_id;
+
+
