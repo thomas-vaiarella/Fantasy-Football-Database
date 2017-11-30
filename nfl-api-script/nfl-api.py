@@ -33,7 +33,16 @@ stat_codes = {
     '00002': 'KRTD', #kick return td
     '00003': 'PRTD', #punt return td
     '49': 'SF', #safety
-
+    '33': 'PAT', #PAT made
+    '34': 'PATM', #PAT missed
+    '35': 'FG0', #FG 0-39yds (maybe <20?)
+    '36': 'FG0', #FG 0-39yds (maybe 20-29?)
+    '37': 'FG0', #FG 0-39yds (maybe 30-39?)
+    '38': 'FG40', #FG 40-49yds
+    '39': 'FG50', #FG 50+yds
+    '42': 'FGM', #FG missed (some distance)
+    '43': 'FGM', #FG missed (some distance)
+    '44': 'FGM', #FG missed (some distance)
 }
 points_mapping = {
     'RY': 0.1, #rush yds
@@ -59,13 +68,16 @@ points_mapping = {
 
 pp = pprint.PrettyPrinter()
 
-def parse_stats(stats):
+
+def parse_stats(stats, player_name):
     mapped_stats = dict()
 
     for key in stats:
         abbr = stat_codes.get(key, None)
         if abbr is not None:
-            mapped_stats[abbr] = int(stats.get(key))
+            mapped_stats[abbr] = int(stats.get(key)) + mapped_stats.get(abbr, 0)
+        elif key != "1":
+            print("No stat name for code: ", key, "player: ", player_name)
     return mapped_stats
 
 
@@ -98,7 +110,7 @@ def player_week(player):
 
     stats = player.pop('stats')
 
-    player['stats'] = parse_stats(stats)
+    player['stats'] = parse_stats(stats, player["name"])
 
     return player
 
@@ -107,6 +119,7 @@ def player_stats_for_week(position, week):
     assert position in positions_array
     assert type(week) == int
     assert week >= 1, week <= 17
+    print("Getting stats for", position, "from week", week)
     payload = {'format': 'json', 'statType': 'weekStats', 'position': position, 'week': week}
     data = nfl_request(endpoint=stats_endpoint, payload=payload)
     players = list(map(player_week, list(data['players'])))
@@ -157,7 +170,7 @@ def insert_stats_for_week(week):
     db.commit()
     cursor.close()
 
-"""
+
 insert_stats_for_week(1)
 insert_stats_for_week(2)
 insert_stats_for_week(3)
@@ -169,4 +182,3 @@ insert_stats_for_week(8)
 insert_stats_for_week(9)
 insert_stats_for_week(10)
 insert_stats_for_week(11)
-"""
