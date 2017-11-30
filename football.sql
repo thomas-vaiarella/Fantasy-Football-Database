@@ -527,6 +527,12 @@ CASE stat_name
     WHEN 'KRTD' THEN RETURN stat_value * 6;
     WHEN 'PRTD' THEN RETURN stat_value * 6;
 	WHEN 'SF' THEN RETURN stat_value * 2;
+    WHEN 'FG0' THEN RETURN stat_value * 3;
+    WHEN 'FG40' THEN RETURN stat_value * 4;
+    WHEN 'FG50' THEN RETURN stat_value * 5;
+	WHEN 'FGM' THEN RETURN stat_value * -1;
+    WHEN 'PAT' THEN RETURN stat_value * 1;
+	WHEN 'PATM' THEN RETURN stat_value * -1;
     
 	WHEN 'DYA' THEN RETURN get_defensive_ya_pts(stat_value);
     WHEN 'PA' THEN RETURN get_defensive_pa_pts(stat_value);
