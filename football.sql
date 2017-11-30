@@ -874,3 +874,36 @@ begin
 end //
 delimiter ;
 
+drop function if exists season_points_for_team;
+delimiter //
+create function season_points_for_team(team int)
+returns decimal(6, 2)
+begin
+	declare total_points decimal(6, 2) default 0;
+    declare current_lineup_id int;
+    declare done bool default false;
+    
+    declare team_lineups cursor for
+		select lineup_id
+        from lineup
+        where team_id = team;
+	
+    declare continue handler for not found
+		set done = true;
+	
+    open team_lineups;
+    
+    read_loop: loop
+		if done then
+			leave read_loop;
+        end if;
+        
+        fetch team_lineups into current_lineup_id;
+        
+        set total_points = total_points + points_for_lineup(current_lineup_id);
+    end loop;
+    close team_lineups;
+    
+    return total_points;
+end //
+delimiter ;
