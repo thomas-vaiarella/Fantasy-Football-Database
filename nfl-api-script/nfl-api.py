@@ -170,7 +170,6 @@ def insert_stats_for_week(week):
     db.commit()
     cursor.close()
 
-
 insert_stats_for_week(1)
 insert_stats_for_week(2)
 insert_stats_for_week(3)
@@ -182,3 +181,5 @@ insert_stats_for_week(8)
 insert_stats_for_week(9)
 insert_stats_for_week(10)
 insert_stats_for_week(11)
+insert_stats_for_week(12)
+insert_stats_for_week(13)

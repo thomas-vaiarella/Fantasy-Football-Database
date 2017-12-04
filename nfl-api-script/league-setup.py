@@ -24,7 +24,7 @@ def create_league():
 
 def add_user(name):
     cursor = db.cursor()
-    cursor.execute("insert into users values(%s, %s);", params=(name, "password"))
+    cursor.execute("insert into users values(%s, %s, %s);", params=(name, "password", ""))
     db.commit()
     cursor.close()
 
@@ -69,9 +69,10 @@ def add_player_to_lineup(player_name, team_id):
 
 league = create_league()
 users = ["test1", "test2", "test3", "test4", "test5", "test6", "test7", "test8", "test9", "test10"]
-'''for user in users:
+for user in users:
     add_user(user)
-    '''
+
+
 team_ids = []
 for user in users:
     team_ids.append(register_user(user, league))
@@ -255,4 +256,3 @@ add_player_to_lineup("Duke Johnson", team_ids[9])
 add_player_to_lineup("Willie Snead", team_ids[9])
 add_player_to_lineup("Corey Coleman", team_ids[9])
 add_player_to_lineup("D'Onta Foreman", team_ids[9])
-

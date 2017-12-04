@@ -963,5 +963,3 @@ begin
 	order by team, starting_or_not desc, field(player_position, 'QB', 'RB', 'WR', 'TE', 'DEF', 'K');
 end //
 delimiter ;
-
-call matchup_for_week(296, 1);
