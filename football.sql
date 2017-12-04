@@ -907,3 +907,61 @@ begin
     return total_points;
 end //
 delimiter ;
+
+drop procedure if exists current_players_in_lineup;
+delimiter //
+create procedure current_players_in_lineup (team_id int)
+begin
+	declare lineup_id int;
+    
+    select current_lineup(team_id) into lineup_id;
+	
+    select player_id, player_name, player_position, player_team, starting_or_not
+    from slot join player using(player_id)
+    where slot.lineup_id = lineup_id
+    order by starting_or_not desc, player_position;
+    
+end //
+delimiter ;
+
+drop procedure if exists matchup_for_week;
+delimiter //
+create procedure matchup_for_week(team_id int, week_num int)
+begin
+	declare scoring int default 0;
+    declare other_team_id int;
+    declare team_lineup int;
+    declare other_lineup int;
+    
+    select scoring_id into scoring
+    from league join team using (league_id)
+    where team.team_id = team_id
+    limit 1;
+            
+	(select 1 as team, m.team1_id as team_id, p.player_id, player_name, player_position,
+			starting_or_not, get_fantasy_points(scoring, weekstats_id) as points
+	from (matchup m join lineup l1 on (l1.team_id = team1_id and l1.week_num = week_num)
+					join slot s1 on (s1.lineup_id = l1.lineup_id)
+					join player p using(player_id)
+					join weekstats w on (w.player_id = p.player_id and w.week_num = week_num))
+	where m.week_num = week_num and 
+			(m.team1_id = team_id or m.team2_id = team_id)
+	order by starting_or_not desc, player_position)
+            
+	union all 
+    
+	(select 2 as team, m.team2_id as team_id, p.player_id, player_name, player_position, 
+			starting_or_not, get_fantasy_points(scoring, weekstats_id) as points
+	from (matchup m join lineup l1 on (l1.team_id = team2_id and l1.week_num = week_num)
+				join slot s1 on (s1.lineup_id = l1.lineup_id)
+				join player p using(player_id)
+				join weekstats w on (w.player_id = p.player_id and w.week_num = week_num))
+	where m.week_num = week_num and 
+			(m.team1_id = team_id or m.team2_id = team_id)
+	order by starting_or_not desc, player_position)
+    
+	order by team, starting_or_not desc, field(player_position, 'QB', 'RB', 'WR', 'TE', 'DEF', 'K');
+end //
+delimiter ;
+
+call matchup_for_week(296, 1);
