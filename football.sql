@@ -1009,6 +1009,14 @@ begin
 end //
 
 delimiter ;
+drop procedure if exists bench_entire_lineup;
+delimiter //
+create procedure bench_entire_lineup(team_id INT)
+begin
+	UPDATE slot SET starting_or_not = 0 WHERE lineup_id = (SELECT current_lineup(team_id));
+end //
+
+delimiter ;
 drop procedure if exists join_leauge;
 delimiter //
 create procedure join_league(league_id INT, team_id INT)
