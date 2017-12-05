@@ -993,4 +993,27 @@ END IF;
 END //
 
 delimiter ;
+drop procedure if exists bench_player;
+delimiter //
+create procedure bench_player(player_id INT, team_id INT)
+begin
+	UPDATE slot SET starting_or_not = 0 WHERE lineup_id = (SELECT current_lineup(team_id)) AND slot.player_id = player_id;
+end //
 
+delimiter ;
+drop procedure if exists start_player;
+delimiter //
+create procedure start_player(player_id INT, team_id INT)
+begin
+	UPDATE slot SET starting_or_not = 1 WHERE lineup_id = (SELECT current_lineup(team_id)) AND slot.player_id = player_id;
+end //
+
+delimiter ;
+drop procedure if exists join_leauge;
+delimiter //
+create procedure join_league(league_id INT, team_id INT)
+begin
+	UPDATE team SET league_id = league_id WHERE team.team_id = team_id;
+end //
+
+delimiter ;
