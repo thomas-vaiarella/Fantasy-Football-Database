@@ -762,6 +762,78 @@ RETURN wins;
 END//    
 DELIMITER ;
 
+drop function if exists get_team_losses;
+delimiter //
+create function get_team_losses(team_id int)
+returns INT
+begin
+	declare losses int DEFAULT 0;
+    declare this_team_pts decimal(5, 2);
+    declare opponent_team_id INT;
+    declare current_week_num INT;
+    declare opponent_pts decimal(5, 2);
+    declare opponent_lineup_id INT;
+    declare this_team_lineup_id INT;
+    DECLARE done INT DEFAULT FALSE;
+	DECLARE cur1 CURSOR FOR SELECT week_num, team2_id FROM matchup WHERE team1_id = team_id;
+	DECLARE cur2 CURSOR FOR SELECT week_num, team1_id FROM matchup WHERE team2_id = team_id;
+	DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+    
+OPEN cur1;
+read_loop: LOOP
+    FETCH cur1 INTO current_week_num, opponent_team_id;
+    IF done THEN
+		LEAVE read_loop;
+	END IF;
+    
+    # Retrieves lineup IDs for each lineup in the matchup that week.
+    SELECT lineup_id INTO this_team_lineup_id FROM lineup WHERE current_week_num = lineup.week_num AND team_id = lineup.team_id;
+    SELECT lineup_id INTO opponent_lineup_id FROM lineup WHERE current_week_num = lineup.week_num AND opponent_team_id = lineup.team_id;
+    
+    # Calculates the points for the two head to head lineups
+    SELECT points_for_lineup(this_team_lineup_id) INTO this_team_pts;
+    SELECT points_for_lineup(opponent_lineup_id) INTO opponent_pts;
+    
+    # Resets lineup IDs to avoid duplication
+    SET this_team_lineup_id = NULL;
+    SET opponent_lineup_id = NULL;
+    
+    IF this_team_pts > opponent_pts THEN
+		SET losses = losses + 1;
+	END IF;
+END loop;
+CLOSE cur1;
+
+SET done = FALSE;
+
+OPEN cur2;
+read_loop: LOOP
+	FETCH cur2 INTO current_week_num, opponent_team_id;
+    IF done THEN
+		LEAVE read_loop;
+	END IF;
+    
+    # Retrieves lineup IDs for each lineup in the matchup that week.
+    SELECT lineup_id INTO this_team_lineup_id FROM lineup WHERE current_week_num = week_num AND team_id = lineup.team_id;
+    SELECT lineup_id INTO opponent_lineup_id FROM lineup WHERE current_week_num = week_num AND opponent_team_id = lineup.team_id;
+    
+    # Calculates the points for the two head to head lineups
+    SELECT points_for_lineup(this_team_lineup_id) INTO this_team_pts;
+    SELECT points_for_lineup(opponent_lineup_id) INTO opponent_pts;
+    
+	# Resets lineup IDs to avoid duplication
+    SET this_team_lineup_id = NULL;
+    SET opponent_lineup_id = NULL;
+    
+    IF this_team_pts < opponent_pts THEN
+		SET losses = losses + 1;
+	END IF;
+END loop;
+CLOSE cur2;
+RETURN losses;
+END//    
+DELIMITER ;
+
 drop procedure if exists advance_lineup;
 delimiter //
 create procedure advance_lineup(lineup_to_advance int)
@@ -1022,6 +1094,20 @@ delimiter //
 create procedure join_league(league_id INT, team_id INT)
 begin
 	UPDATE team SET league_id = league_id WHERE team.team_id = team_id;
+end //
+
+delimiter ;
+drop function if exists get_matchup_score;
+delimiter //
+create function get_matchup_score(week_num INT, team_id_1 INT, team_id_2 INT)
+returns VARCHAR(45)
+begin
+	DECLARE team_1_pts  INT;
+	DECLARE team_2_pts INT ;
+	SELECT(SELECT lineup_id_1 FROM lineup WHERE team_id = team_1_id AND lineup.week_num = week_num) INTO team_1_pts;
+    SELECT(SELECT lineup_id_2 FROM lineup WHERE team_id = team_2_id AND lineup.week_num = week_num) INTO team_2_pts;
+    
+    RETURN CONCAT(team_1_pts, ' - ',  team_2_pts);
 end //
 
 delimiter ;
