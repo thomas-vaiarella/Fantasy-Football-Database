@@ -963,3 +963,34 @@ begin
 	order by team, starting_or_not desc, field(player_position, 'QB', 'RB', 'WR', 'TE', 'DEF', 'K');
 end //
 delimiter ;
+
+drop procedure if exists drop_player_to_fa;
+delimiter //
+create procedure drop_player_to_fa(player_id INT, team_id INT)
+BEGIN
+DELETE FROM slot WHERE lineup_id = (SELECT current_lineup(team_id)) AND slot.player_id = player_id;
+END //
+
+delimiter ;
+drop procedure if exists swap_slots;
+delimiter //
+create procedure swap_slots(player_id1 INT, player_id2 INT, team_id INT)
+BEGIN
+DECLARE player_1_starting INT;
+DECLARE player_2_starting INT;
+
+IF (SELECT player_position FROM player WHERE player_id = player_id1) 
+= (SELECT player_position FROM player WHERE player_id = player_id1)
+THEN
+	SET player_1_starting = (SELECT starting_or_not FROM slot WHERE lineup_id = (SELECT current_lineup(team_id)) AND player_id = player1_id);
+    SET player_2_starting = (SELECT starting_or_not FROM slot WHERE lineup_id = (SELECT current_lineup(team_id)) AND player_id = player2_id);
+	
+    IF player_1_starting != player_2_starting THEN 
+		UPDATE slot SET starting_or_not = player_1_starting WHERE lineup_id = (SELECT current_lineup(team_id)) AND player_id = player2_id;
+        UPDATE slot SET starting_or_not = player_2_starting WHERE lineup_id = (SELECT current_lineup(team_id)) AND player_id = player1_id;
+	END IF;
+END IF;
+END //
+
+delimiter ;
+
