@@ -1096,18 +1096,20 @@ begin
 	UPDATE team SET league_id = league_id WHERE team.team_id = team_id;
 end //
 
+# Returns a formatted matchup score string
 delimiter ;
 drop function if exists get_matchup_score;
 delimiter //
 create function get_matchup_score(week_num INT, team_id_1 INT, team_id_2 INT)
 returns VARCHAR(45)
 begin
-	DECLARE team_1_pts  INT;
-	DECLARE team_2_pts INT ;
-	SELECT(SELECT lineup_id_1 FROM lineup WHERE team_id = team_1_id AND lineup.week_num = week_num) INTO team_1_pts;
-    SELECT(SELECT lineup_id_2 FROM lineup WHERE team_id = team_2_id AND lineup.week_num = week_num) INTO team_2_pts;
+	DECLARE team_1_pts  DECIMAL(5, 2);
+	DECLARE team_2_pts DECIMAL(5, 2) ;
+	SELECT points_for_lineup((SELECT lineup_id FROM lineup WHERE team_id = team_id_1 AND lineup.week_num = week_num)) INTO team_1_pts;
+    SELECT points_for_lineup((SELECT lineup_id FROM lineup WHERE team_id = team_id_2 AND lineup.week_num = week_num)) INTO team_2_pts;
     
     RETURN CONCAT(team_1_pts, ' - ',  team_2_pts);
 end //
 
 delimiter ;
+
