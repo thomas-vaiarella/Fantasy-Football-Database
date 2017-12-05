@@ -1096,7 +1096,7 @@ begin
 	UPDATE team SET league_id = league_id WHERE team.team_id = team_id;
 end //
 
-# Returns a formatted matchup score string
+# Returns a formatted matchup score varchar
 delimiter ;
 drop function if exists get_matchup_score;
 delimiter //
@@ -1111,5 +1111,14 @@ begin
     RETURN CONCAT(team_1_pts, ' - ',  team_2_pts);
 end //
 
+# Returns a formatted season-long record varchar
 delimiter ;
+drop function if exists get_record;
+delimiter //
+create function get_record(team_id INT)
+returns VARCHAR(45)
+begin
+    RETURN CONCAT('SEASON RECORD: ', (SELECT get_team_wins(team_id)), ' - ',  (SELECT get_team_losses(team_id)));
+end //
 
+delimiter ;
