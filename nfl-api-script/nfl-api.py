@@ -44,31 +44,13 @@ stat_codes = {
     '43': 'FGM', #FG missed (some distance)
     '44': 'FGM', #FG missed (some distance)
 }
-points_mapping = {
-    'RY': 0.1, #rush yds
-    'RTD': 6.0, #rush td
-    'REC': 0.0, #receptions
-    'REY': 0.1, #rec yds
-    'RETD': 6.0, #rec td
-    'FUML': -2.0, #fumbles lost
-    'PY': 0.04, #pass yds
-    'PTD': 4.0, #pass tds
-    'INT': -2.0, #int thrown
-    'SK': 1.0, #sack
-    'DINT': 2.0, #int caught
-    'FR': 2.0, #fum recovered
-    'DYD': 100000000, #def yds
-    'PA': 100000000, #pts allowed
-    'INTTD': 6.0, #pick-six
-    'FRTD': 6.0, #fumble-six
-    'KRTD': 6.0, #kick return td
-    'PRTD': 6.0, #punt return td
-    'SF': 2.0
-}
 
 pp = pprint.PrettyPrinter()
 
 
+# Parses the stats in the NFL's stats JSON
+# object to change stat codes to actual stat
+# names for ease of use in the backend.
 def parse_stats(stats, player_name):
     mapped_stats = dict()
 
@@ -81,26 +63,10 @@ def parse_stats(stats, player_name):
     return mapped_stats
 
 
-def player_points(player):
-    stats = player.get('stats', None)
-    if stats is None:
-        return 0.0
-    return points(stats)
-
-
-def points(stats):
-    total_points = 0.0
-    for key in stats:
-        amount = stats.get(key, 0)
-        total_points += amount * points_mapping.get(key, 0.0)
-    return round(total_points, 2)
-
-
+# Takes a "Player" object from the NFL's API
+# stats response and manipulates it to match
+# what our database is looking for.
 def player_week(player):
-    """
-
-    :type player: dict
-    """
     player.pop('esbid')
     player.pop('gsisPlayerId')
     player.pop('seasonPts')
@@ -115,6 +81,8 @@ def player_week(player):
     return player
 
 
+# Fetches the stats for players of the given position in
+# the given week from the NFL API.
 def player_stats_for_week(position, week):
     assert position in positions_array
     assert type(week) == int
@@ -126,6 +94,8 @@ def player_stats_for_week(position, week):
     return players
 
 
+# Executes a request on the NFL API with the given endpoint
+# and payload.
 def nfl_request(endpoint, payload):
     r = requests.get(api_url + endpoint, params=payload)
     return r.json()
@@ -150,6 +120,10 @@ get_week_stats_for_player_week = "SELECT get_player_week_stats(%s, %s);"
 # a given stat for a given week's stats.
 set_stats_produced = "call set_stats_produced(%s, %s, %s);"
 
+
+# Gets all stats for the given week via helper methods,
+# then inserts the appropriate values into the DB with
+# the above procedures.
 def insert_stats_for_week(week):
     cursor = db.cursor()
     player_stats = all_stats_for_week(week)

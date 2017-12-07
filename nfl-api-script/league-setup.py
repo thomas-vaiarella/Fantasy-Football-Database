@@ -7,6 +7,7 @@ if db is None:
     exit(1)
 
 
+# Creates a league in the DB and returns the league id.
 def create_league():
     cursor = db.cursor()
 
@@ -22,6 +23,8 @@ def create_league():
     return league_id
 
 
+# Adds a user with the given name into the DB,
+# with the password "password" and no profile picture.
 def add_user(name):
     cursor = db.cursor()
     cursor.execute("insert into users values(%s, %s, %s);", params=(name, "password", ""))
@@ -29,6 +32,8 @@ def add_user(name):
     cursor.close()
 
 
+# Registers a user in a league. Their team name
+# will be the same as their user name.
 def register_user(name, league):
     cursor = db.cursor()
     cursor.execute("insert into team values(team_id, %s, %s, %s);", (league, name, name))
@@ -39,6 +44,8 @@ def register_user(name, league):
     return team_id
 
 
+# Adds a lineup for week 1, so that we can start putting
+# players into that lineup.
 def add_week1_lineup(team_id):
     cursor = db.cursor()
     cursor.execute("insert into lineup values(lineup_id, 1, %(team)s);", {'team': team_id})
@@ -49,6 +56,10 @@ def add_week1_lineup(team_id):
     return lineup_id
 
 
+# Adds the player with the given name into the given lineup.
+# This will sometimes fail depending on roster construction,
+# as the league that these lineups were taken from have
+# different rules than the DB does around rosters.
 def add_player_to_lineup(player_name, team_id):
     cursor = db.cursor()
     cursor.execute("select player_id from player where player_name = %(player)s limit 1;", {'player': player_name})
@@ -66,21 +77,24 @@ def add_player_to_lineup(player_name, team_id):
 
 
 
-
+# Creates a league and adds users.
 league = create_league()
 users = ["test1", "test2", "test3", "test4", "test5", "test6", "test7", "test8", "test9", "test10"]
 for user in users:
     add_user(user)
 
 
+# Creates teams in the league for the users.
 team_ids = []
 for user in users:
     team_ids.append(register_user(user, league))
 
+# Creates lineups for the created teams.
 lineup_ids = []
 for team_id in team_ids:
     lineup_ids.append(add_week1_lineup(team_id))
 
+# Adds the following players to the lineups of the teams.
 add_player_to_lineup("Cam Newton", team_ids[0])
 add_player_to_lineup("DeMarco Murray", team_ids[0])
 add_player_to_lineup("Amari Cooper", team_ids[0])
